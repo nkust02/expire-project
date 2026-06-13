@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Call backend scheduler
         run: |
-          curl --fail --connect-timeout 60 --max-time 60 -X POST https://expire-project.onrender.com -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
+          curl --fail --connect-timeout 60 --max-time 60 -X POST https://expire-project.onrender.com/debug/run-scheduler -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
