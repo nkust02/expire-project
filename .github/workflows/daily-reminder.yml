@@ -15,7 +15,8 @@ jobs:
       - name: 2. 設定 Node.js 環境
         uses: actions/setup-node@v4
         with:
-          node-node-version: '18'
+          # 💡 修正拼字：將 node-node-version 改為正確的 node-version，並升級到穩定的 24 版本
+          node-version: '24'
 
       - name: 3. 安裝暫時寄信所需的套件
         run: npm install nodemailer
@@ -23,13 +24,11 @@ jobs:
       - name: 4. 向 Render 索取今天需要寄信的 JSON 清單
         id: fetch_render
         run: |
-          # 呼叫 Render 並把回傳的 JSON 資料存在變數中
-          RESPONSE=$(curl --fail --connect-timeout 60 --max-time 60 -X POST https://expire-project.onrender.com/debug/run-scheduler -H "x-cron-secret: ${{ secrets.CRON_SECRET }}")
-          # 將資料安全傳遞給下一個步驟
+          RESPONSE=$(curl --fail --connect-timeout 60 --max-time 60 -X POST https://expire-project.onrender.com/debug/run-scheduler -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" )
           echo "DATA=$RESPONSE" >> $GITHUB_ENV
 
       - name: 5. 由 GitHub 伺服器代工執行寄信指令
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-        run: node action-mailer.js '$DATA'
+        run: node action-mailer.js "$DATA"
