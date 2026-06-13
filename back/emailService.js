@@ -4,12 +4,19 @@ dotenv.config();
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: '://gmail.com',  // 明確指定 Gmail 伺服器
+  port: 587,               // 改用安全的 587 埠口
+  secure: false,           // 587 埠口此項必須為 false
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  localAddress: '0.0.0.0', // ⭐ 強制指定本地端使用 IPv4 連線
+  tls: {
+    rejectUnauthorized: false // 允許安全憑證的相容性
   }
 });
+
 
 export async function sendExpiryEmail(
   email,
