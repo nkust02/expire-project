@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Call backend scheduler
         run: |
-          curl -X POST https://onrender.com -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
+          curl -X POST https://expire-project.onrender.com -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
