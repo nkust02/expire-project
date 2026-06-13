@@ -14,7 +14,10 @@ const transporter = nodemailer.createTransport({
   localAddress: '0.0.0.0', // ⭐ 強制指定本地端使用 IPv4 連線
   tls: {
     rejectUnauthorized: false // 允許安全憑證的相容性
-  }
+  },
+  // 💡 加上這兩行！逼出底層通訊日誌
+  debug: true,
+  logger: true
 });
 
 
