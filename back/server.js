@@ -81,8 +81,12 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/debug/run-scheduler', async (req, res) => {
+  // 💡 新增這行：證明 GitHub 有沒有成功連進來
+  console.log('--- [收到排程請求] 有人呼叫了 /debug/run-scheduler ---');
   const secret = req.headers['x-cron-secret'];
   if (secret !== process.env.CRON_SECRET) {
+    // 💡 新增這行：如果暗號不對，要在 Render Log 講出來
+    console.log('❌ 密鑰不匹配！拒絕連線。收到的是:', secret);
     return res.status(401).send('Unauthorized');
   }
   try {
