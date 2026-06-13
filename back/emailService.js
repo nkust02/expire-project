@@ -54,6 +54,6 @@ export async function sendExpiryEmail(
     );
 
   } catch (error) {
-    console.error(error);
+    console.error(`❌ 信件寄送給 ${email} 失敗，原因為:`, error.message || error);
   }
 }
