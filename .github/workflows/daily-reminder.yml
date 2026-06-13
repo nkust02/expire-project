@@ -3,7 +3,7 @@ name: Daily Expiry Reminder
 on:
   schedule:
     - cron: '0 0 * * *'  # UTC 0:00 = 台灣時間 8:00
-  workflow_dispatch:       # 可選：讓你能手動在 GitHub 上點按鈕測試
+  workflow_dispatch:       # 讓你能手動在 GitHub 上點按鈕測試
 
 jobs:
   trigger-reminder:
@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Call backend scheduler
         run: |
-          curl -X POST https://expire-project.onrender.com/debug/run-scheduler -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
+          curl -X POST https://onrender.com -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
