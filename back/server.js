@@ -80,27 +80,54 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// server.js 中的路由修改
 app.post('/debug/run-scheduler', async (req, res) => {
-  // 💡 新增這行：證明 GitHub 有沒有成功連進來
-  console.log('--- [收到排程請求] 有人呼叫了 /debug/run-scheduler ---');
+  console.log('--- [GitHub Actions 扣門] 開始封裝即期食品資料 ---');
   const secret = req.headers['x-cron-secret'];
   if (secret !== process.env.CRON_SECRET) {
-    // 💡 新增這行：如果暗號不對，要在 Render Log 講出來
-    console.log('❌ 密鑰不匹配！拒絕連線。收到的是:', secret);
     return res.status(401).send('Unauthorized');
   }
-  // 💡 關鍵修改：立刻回應 200 給 GitHub，不讓 GitHub 乾等
-  res.status(200).send('Scheduler triggered, running in background');
+
   try {
-    console.log('🚀 開始在背景執行寄信邏輯...');
-    await runExpiryReminder();
-    console.log('🎉 背景寄信任務執行完畢');
-    //return res.status(200).send('Scheduler executed');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+
+    // 1. 撈取未完成物品
+    const allItems = await Item.find({ done: { $ne: true } });
+    const sendList = [];
+
+    // 2. 計算並篩選出今天真正需要寄信的名單
+    for (const item of allItems) {
+      const expireDate = new Date(item.date);
+      expireDate.setHours(0, 0, 0, 0);
+      const diffTime = expireDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const remindDaysNum = parseInt(item.remindDays) || 1;
+
+      if (diffDays <= remindDaysNum && !item.emailSentDates.includes(todayStr)) {
+        // 將需要寄信的資訊打包
+        sendList.push({
+          itemId: item._id,
+          userEmail: item.userEmail,
+          name: item.name,
+          date: item.date,
+          diffDays: diffDays,
+          todayStr: todayStr
+        });
+      }
+    }
+
+    // 3. 💡 關鍵：直接把這個陣列名單當作 JSON 回傳給 GitHub Actions
+    console.log(`📊 封裝完成，共有 ${sendList.length} 筆項目需要寄信。`);
+    return res.status(200).json(sendList);
+
   } catch (err) {
-    console.error('Debug run-scheduler 錯誤:', err);
-    //return res.status(500).send('Scheduler failed');
+    console.error('Render 打包失敗:', err);
+    return res.status(500).send('Render error');
   }
 });
+
 
 // 🍎 4. 物品管理核心 API (新增、讀取並自動排序)
 

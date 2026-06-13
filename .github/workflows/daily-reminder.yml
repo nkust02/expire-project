@@ -2,13 +2,34 @@ name: Daily Expiry Reminder
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # UTC 0:00 = 台灣時間 8:00
-  workflow_dispatch:       # 讓你能手動在 GitHub 上點按鈕測試
+    - cron: '0 0 * * *'  # 台灣時間早上 8:00
+  workflow_dispatch:       # 讓你能手動點按鈕測試
 
 jobs:
-  trigger-reminder:
+  trigger-and-send:
     runs-on: ubuntu-latest
     steps:
-      - name: Call backend scheduler
+      - name: 1. 檢出最新的 GitHub 程式碼
+        uses: actions/checkout@v4
+
+      - name: 2. 設定 Node.js 環境
+        uses: actions/setup-node@v4
+        with:
+          node-node-version: '18'
+
+      - name: 3. 安裝暫時寄信所需的套件
+        run: npm install nodemailer
+
+      - name: 4. 向 Render 索取今天需要寄信的 JSON 清單
+        id: fetch_render
         run: |
-          curl --fail --connect-timeout 60 --max-time 60 -X POST https://expire-project.onrender.com/debug/run-scheduler -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
+          # 呼叫 Render 並把回傳的 JSON 資料存在變數中
+          RESPONSE=$(curl --fail --connect-timeout 60 --max-time 60 -X POST https://expire-project.onrender.com/debug/run-scheduler -H "x-cron-secret: ${{ secrets.CRON_SECRET }}")
+          # 將資料安全傳遞給下一個步驟
+          echo "DATA=$RESPONSE" >> $GITHUB_ENV
+
+      - name: 5. 由 GitHub 伺服器代工執行寄信指令
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        run: node action-mailer.js '$DATA'
