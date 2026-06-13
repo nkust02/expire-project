@@ -1,43 +1,40 @@
 // action-mailer.js
-// 💡 注意 1：因為 GitHub 環境預設支援 CommonJS 語法，這裡一律改用 require 導入
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
-// 💡 注意 2：接收來自 GitHub 傳入的 Render JSON 名單字串
-const rawData = process.argv[2]; 
-if (!rawData || rawData === '$DATA') {
-  console.log('❌ 沒有收到任何需要寄信的資料，程式結束。');
+// 接收來自 GitHub Actions 傳入的 Render JSON 名單資料
+// 第一個參數是執行的路徑，第二個參數是檔案路徑，第三個才是我們傳入的 JSON 字串
+const jsonString = process.argv[2]; 
+
+if (!jsonString || jsonString === '$DATA' || jsonString === '[]') {
+  console.log('⚠️ 欄位為空或沒有任何需要寄信的即期食品資料，程式結束。');
   process.exit(0);
 }
 
-// 將 GitHub 傳過來的字串還原成 JavaScript 陣列物件
-const sendList = JSON.parse(rawData);
+let sendList = [];
+try {
+  sendList = JSON.parse(jsonString);
+} catch (parseErr) {
+  console.error('❌ 解析 Render 傳回的 JSON 資料失敗：', parseErr.message);
+  process.exit(1);
+}
 
-// 建立 Nodemailer 傳送器（這段跟你原本的一模一樣，在 GitHub 執行絕對不會再卡 Resolved！）
+// 建立 Gmail Nodemailer 傳送器（在 GitHub Actions 執行，走最簡單的 service 快捷鍵即可通關！）
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  localAddress: '0.0.0.0',
-  tls: {
-    rejectUnauthorized: false
-  },
-  debug: true,
-  logger: true
+  }
 });
 
-// 💡 核心修改：遍歷 Render 給我們的名單，一封一封把信噴射出去！
 async function startActionMail() {
-  console.log(`🤖 GitHub Actions 寄信機器人啟動，準備發送 ${sendList.length} 封信件...`);
+  console.log(`🤖 [GitHub 伺服器代工] 寄信機器人啟動，準備發送 ${sendList.length} 封信件...`);
   
   for (const item of sendList) {
     try {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-        to: item.userEmail, // 💡 對應 Render 打包過來的欄位名稱
+        to: item.userEmail, 
         subject: "【過期了沒】食品到期提醒",
         html: `
           <h2>食品即將到期</h2>
