@@ -5,8 +5,8 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',  // 明確指定 Gmail 伺服器
-  port: 587,               // 改用安全的 587 埠口
-  secure: false,           // 587 埠口此項必須為 false
+  port: 465,               // 用安全的 465 埠口
+  secure: true,            // 465 埠口此項必須為 true
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
