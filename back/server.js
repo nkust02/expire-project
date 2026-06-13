@@ -89,12 +89,16 @@ app.post('/debug/run-scheduler', async (req, res) => {
     console.log('❌ 密鑰不匹配！拒絕連線。收到的是:', secret);
     return res.status(401).send('Unauthorized');
   }
+  // 💡 關鍵修改：立刻回應 200 給 GitHub，不讓 GitHub 乾等
+  res.status(200).send('Scheduler triggered, running in background');
   try {
+    console.log('🚀 開始在背景執行寄信邏輯...');
     await runExpiryReminder();
-    return res.status(200).send('Scheduler executed');
+    console.log('🎉 背景寄信任務執行完畢');
+    //return res.status(200).send('Scheduler executed');
   } catch (err) {
     console.error('Debug run-scheduler 錯誤:', err);
-    return res.status(500).send('Scheduler failed');
+    //return res.status(500).send('Scheduler failed');
   }
 });
 
